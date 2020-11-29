@@ -1,0 +1,60 @@
+<rspec type="request" xmlns="http://www.geni.net/resources/rspec/3" xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" xmlns:jacks="http://www.protogeni.net/resources/rspec/ext/jacks/1" xmlns:tour="http://www.protogeni.net/resources/rspec/ext/apt-tour/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.geni.net/resources/rspec/3    http://www.geni.net/resources/rspec/3/request.xsd">
+  <node client_id="router" xmlns="http://www.geni.net/resources/rspec/3">
+    <icon url="https://www.emulab.net/protogeni/jacks-stable/images/default.svg" xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1"/>
+    <sliver_type name="emulab-xen" xmlns="http://www.geni.net/resources/rspec/3">
+      <disk_image name="urn:publicid:IDN+emulab.net+image+emulab-ops//docker-ubuntu18-std" xmlns="http://www.geni.net/resources/rspec/3"/>
+    </sliver_type>
+    <services xmlns="http://www.geni.net/resources/rspec/3">
+      <execute command="sudo /proj/novel-scheduler-PG0/sw/552-telesurgery/deps.sh" shell="/bin/sh" xmlns="http://www.geni.net/resources/rspec/3"/>
+    </services>
+    <interface client_id="interface-0" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <interface client_id="interface-5" xmlns="http://www.geni.net/resources/rspec/3"/>
+  </node>
+  <node client_id="interfere-1" xmlns="http://www.geni.net/resources/rspec/3">
+    <icon url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg" xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1"/>
+    <sliver_type name="raw-pc" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <services xmlns="http://www.geni.net/resources/rspec/3">
+      <execute command="sudo /proj/novel-scheduler-PG0/sw/552-telesurgery/deps.sh" shell="/bin/sh" xmlns="http://www.geni.net/resources/rspec/3"/>
+    </services>
+    <interface client_id="interface-1" xmlns="http://www.geni.net/resources/rspec/3"/>
+  </node>
+  <node client_id="surgeon" xmlns="http://www.geni.net/resources/rspec/3">
+    <icon url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg" xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1"/>
+    <sliver_type name="raw-pc" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <services xmlns="http://www.geni.net/resources/rspec/3">
+      <execute command="sudo /proj/novel-scheduler-PG0/sw/552-telesurgery/deps.sh" shell="/bin/sh" xmlns="http://www.geni.net/resources/rspec/3"/>
+    </services>
+    <interface client_id="interface-4" xmlns="http://www.geni.net/resources/rspec/3"/>
+  </node>
+  <node client_id="patient" xmlns="http://www.geni.net/resources/rspec/3">
+    <icon url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg" xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1"/>
+    <sliver_type name="raw-pc" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <services xmlns="http://www.geni.net/resources/rspec/3">
+      <execute command="sudo /proj/novel-scheduler-PG0/sw/552-telesurgery/deps.sh" shell="/bin/sh" xmlns="http://www.geni.net/resources/rspec/3"/>
+    </services>
+    <interface client_id="interface-6" xmlns="http://www.geni.net/resources/rspec/3"/>
+  </node>
+  <node client_id="interfere-2" xmlns="http://www.geni.net/resources/rspec/3">
+    <icon url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg" xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1"/>
+    <sliver_type name="raw-pc" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <services xmlns="http://www.geni.net/resources/rspec/3">
+      <execute command="sudo /proj/novel-scheduler-PG0/sw/552-telesurgery/deps.sh" shell="/bin/sh" xmlns="http://www.geni.net/resources/rspec/3"/>
+    </services>
+    <interface client_id="interface-7" xmlns="http://www.geni.net/resources/rspec/3"/>
+  </node>
+  <link client_id="link-0" xmlns="http://www.geni.net/resources/rspec/3">
+    <interface_ref client_id="interface-0" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <interface_ref client_id="interface-1" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <interface_ref client_id="interface-4" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <site id="undefined" xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1"/>
+  </link>
+  <link client_id="link-2" xmlns="http://www.geni.net/resources/rspec/3">
+    <interface_ref client_id="interface-5" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <interface_ref client_id="interface-6" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <interface_ref client_id="interface-7" xmlns="http://www.geni.net/resources/rspec/3"/>
+    <site id="undefined" xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1"/>
+  </link>
+  <rspec_tour xmlns="http://www.protogeni.net/resources/rspec/ext/apt-tour/1">
+    <description type="markdown" xmlns="">Router VM on two subnets; surgeon and patient bridged</description>
+  </rspec_tour>
+</rspec>
