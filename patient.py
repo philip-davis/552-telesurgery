@@ -36,6 +36,7 @@ class VideoStreamer:
             b.wait()
             if success:
                 self._sender.send_image(str(count), image)
+                print('sent frame ', count)
             count += 1
             self.time += .033
             sleep_time = self.time - time.time()
@@ -107,13 +108,14 @@ r_camera = VideoStreamer(sys.argv[2], 5556)
 
 context = zmq.Context()
 sub = context.socket(zmq.SUB)
-sub.connect('tcp://localhost:5557')
+sub.connect('tcp://10.10.1.3:5557')
 sub.setsockopt_string(zmq.SUBSCRIBE, '')
 
 lost = 0
 last = 0
 while(True):
     count = int(sub.recv_string().split()[0])
+    print('got command ', count)
     if count == -1:
         break
     if(count > last + 1):

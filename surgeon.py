@@ -63,6 +63,7 @@ class VideoStreamSubscriber:
         receiver = imagezmq.ImageHub("tcp://{}:{}".format(self.hostname, self.port), REQ_REP=False)
         while not self._stop:
             self._data = receiver.recv_jpg()
+            print("got frame ", self._data[0])
             self._recv_time = time.time()
             self._data_ready.set()
         receiver.close()
@@ -70,7 +71,7 @@ class VideoStreamSubscriber:
     def close(self):
         self._stop = True
 
-hostname = 'localhost'
+hostname = '10.10.2.2'
 lport = 5555
 rport = 5556
 l_receiver = VideoStreamSubscriber(hostname, lport)
@@ -95,6 +96,7 @@ while True:
         break
     if(l_msg == r_msg):
         frameno = int(l_msg)
+        print('got frame {}'.format(frameno))
         if(frameno != last + 1):
             print('lost {} frame(s)!'.format(frameno - last))
             lost += (frameno - last)
