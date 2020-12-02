@@ -11,15 +11,18 @@ import threading
 import imagezmq
 import numpy as np
 import zmq
+import pickle
 
 b = threading.Barrier(2)
 
 class VideoStreamer:
     def __init__(self, name, port):
         self.port = port
-        stage = '/tmp/{file}'.format(file=name)
-        copyfile(name, stage)
-        self.vid = cv2.VideoCapture(stage)
+        #stage = '/tmp/{file}'.format(file=name)
+        #copyfile(name, stage)
+        #self.vid = cv2.VideoCapture(stage)
+        with open(name, 'rb') as filehandle:
+            self.frames = pickle.load(filehandle)
         self._sender = imagezmq.ImageSender('tcp://*:{port}'.format(port=self.port), REQ_REP=False)
         self._done = threading.Event()
         self._thread = threading.Thread(target=self._run, args=())
@@ -27,16 +30,27 @@ class VideoStreamer:
         self._thread.start()
     
     def _run(self):
-        time.sleep(5)
+        '''
         success, image = self.vid.read()
-        self.time = time.time()
+        frames = list()
+        print("preparing encoding")
         count = 1
         while success:
             success, image = self.vid.read()
-            b.wait()
             if success:
-                self._sender.send_image(str(count), image)
-                print('sent frame ', count)
+                ret, frame = cv2.imencode('.PNG', image, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+                frames.append(frame)
+            print('frame ', count)
+            count += 1
+        print("encoding complete")
+        '''
+        time.sleep(5)
+        self.time = time.time()
+        count = 1
+        for frame in self.frames:
+            b.wait()
+            print(frame.shape)
+            self._sender.send_image(str(count), frame)
             count += 1
             self.time += .033
             sleep_time = self.time - time.time()
