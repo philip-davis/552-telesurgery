@@ -129,8 +129,10 @@ lost = 0
 last = 0
 commands = {}
 while(True):
-    count = int(sub.recv_string().split()[0])
-    commands[count] = time.time()
+    cmd = sub.recv_string().split()
+    count = int(cmd[0])
+    delay = float(cmd[1])
+    commands[count] = (time.time(), delay)
     print('got command ', count)
     if count == -1:
         break

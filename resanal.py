@@ -53,14 +53,31 @@ for count in range(1, max_frame):
         good_diffs.append(diff)
         last_good = count
         last_time = arr_time
-nframes = max_frame - (lost + halflost)
-print("{total} frames recv, {lost} both missing, {halflost} half missing".format(total=nframes, lost=lost, halflost=halflost))
+nframes = max_frame - (lost + halflost + drop)
+print("{total} frames recv ({fps} FPS,) {lost} both missing, {halflost} half missing".format(total=nframes, fps=nframes/(last_time-first_time), lost=lost, halflost=halflost))
 print("{drop} frames arrived too late".format(drop=drop))
 if late > 0:
     print("{late} frames arrived late, but still usable. Average lateness {avg} ms, worse is {worst} ms.".format(late=late, avg=1000*(late_time/late),worst=latest))
-print("average disparity is {avg} ms, stdev is {stdevi} ms , max disparity is {maxdiff} ms".format(avg=(1000*totaldiff)/nframes,stdevi=1000*stdev(good_diffs), maxdiff=1000*maxdiff))
-print("avg jitter is {jitter} ms".format(jitter=1000*(jitter_total/num_good)))
-
+print("average frame disparity is {avg} ms, stdev is {stdevi} ms , max disparity is {maxdiff} ms".format(avg=(1000*totaldiff)/nframes,stdevi=1000*stdev(good_diffs), maxdiff=1000*maxdiff))
+print("avg frame jitter is {jitter} ms".format(jitter=1000*(jitter_total/num_good)))
 
 del ctimes[-1]
-
+lost = 0
+ncmd = 0
+last_cmd = max(ctimes.keys())
+last_good = -1
+total_jitter = 0
+for count in range(1, last_cmd):
+    if not count in ctimes:
+        lost += 1
+    else:
+        ncmd += 1
+        (time, delay) = ctimes[count]
+        if count == last_good + 1:
+            myjitter = abs(time - (last_time + last_delay))
+            total_jitter += myjitter
+        last_good = count
+        last_time = time
+        last_delay = delay
+print("{ncmd} commands received, and {lost} lost".format(ncmd=ncmd, lost=lost))
+print("avg cmd jitter is {jitter} ms".format(jitter=1000*(total_jitter/ncmd)))

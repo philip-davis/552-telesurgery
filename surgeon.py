@@ -30,9 +30,9 @@ class SurgeonControl:
         count = 0
         while True:
             count += 1
-            
-            self._pub.send_string('{count} {xshift},{yshift},{zshift}'.format(count=count, xshift=random(), yshift=random(), zshift=random()))
-            time.sleep(random())        
+            sleep_time = random()
+            self._pub.send_string('{count} {sleep_time} {xshift},{yshift},{zshift}'.format(count=count, sleep_time=sleep_time, xshift=random(), yshift=random(), zshift=random()))
+            time.sleep(sleep_time)        
             if self._done:
                 self._pub.send_string('-1 0 0 0')
                 break
