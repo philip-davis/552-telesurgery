@@ -1,1 +1,2 @@
 https://www.bogotobogo.com/FFMpeg/ffmpeg_video_test_patterns_src.php
+ffmpeg -i testsrc2.mp4 -an -vcodec libx264 -crf 23 test2src2.h264

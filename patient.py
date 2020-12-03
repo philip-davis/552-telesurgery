@@ -127,8 +127,10 @@ sub.setsockopt_string(zmq.SUBSCRIBE, '')
 
 lost = 0
 last = 0
+commands = {}
 while(True):
     count = int(sub.recv_string().split()[0])
+    commands[count] = time.time()
     print('got command ', count)
     if count == -1:
         break
@@ -137,5 +139,8 @@ while(True):
     last = count 
 l_camera.close()
 r_camera.close()
+
+with open('cmdtimes.dat', 'wb') as filehandle:
+    pickle.dump(commands, filehandle)
 
 print('lost {} commands'.format(lost))

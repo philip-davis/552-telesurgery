@@ -11,6 +11,7 @@ import threading
 import time
 import zmq
 from random import random
+import pickle
 
 class SurgeonControl:
     def __init__(self, port):
@@ -130,6 +131,10 @@ finish_time = time.time()
 control.close()
 l_times = l_receiver.arrival_times
 r_times = r_receiver.arrival_times
+times = { "left": l_times, "right": r_times }
+with open('frametimes.dat', 'wb') as filehandle:
+    pickle.dump(times, filehandle)
+
 last_frame = max(max(l_times.keys()), max(r_times.keys()))
 for count in range (1, last_frame):
     if count not in l_times and count not in r_times:
