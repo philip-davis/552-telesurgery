@@ -68,7 +68,7 @@ class VideoStreamSubscriber:
             if(self._data[0] == 'done'):
                 break
             self._recv_time = time.time()
-            print("got {count} at {time}".format(count=self._data[0],time=self._recv_time))
+            #print("got {count} at {time}".format(count=self._data[0],time=self._recv_time))
             self.arrival_times[int(self._data[0])] = self._recv_time
             self._data_ready.set()
         receiver.close()

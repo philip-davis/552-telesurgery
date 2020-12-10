@@ -49,7 +49,7 @@ class VideoStreamer:
         count = 1
         for frame in self.frames:
             b.wait()
-            print(frame.shape)
+            #print(frame.shape)
             self._sender.send_image(str(count), frame)
             count += 1
             self.time += .033
@@ -133,7 +133,7 @@ while(True):
     count = int(cmd[0])
     delay = float(cmd[1])
     commands[count] = (time.time(), delay)
-    print('got command ', count)
+    #print('got command ', count)
     if count == -1:
         break
     if(count > last + 1):
