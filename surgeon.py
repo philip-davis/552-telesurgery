@@ -4,7 +4,7 @@
 """https://zguide.zeromq.org/docs/chapter1/"""
 
 import sys
-
+import numpy
 import cv2
 import imagezmq
 import threading
@@ -13,10 +13,19 @@ import zmq
 from random import random
 import pickle
 
+def recv_array(socket, flags=0, copy=True, track=False):
+    """recv a numpy array"""
+    md = socket.recv_json(flags=flags)
+    msg = socket.recv(flags=flags, copy=copy, track=track)
+    buf = memoryview(msg)
+    A = numpy.frombuffer(buf, dtype=md['dtype'])
+    return (md['msg'], A.reshape(md['shape']))
+
 class SurgeonControl:
-    def __init__(self, port):
+    def __init__(self, port, tos=0):
         self.port = port
         ctx = zmq.Context.instance()
+        ctx.setsockopt(zmq.TOS, tos)
         self._pub = ctx.socket(zmq.PUB)
         self._pub.bind('tcp://*:{}'.format(port))
         time.sleep(5)
@@ -62,16 +71,19 @@ class VideoStreamSubscriber:
         return self._recv_time, self._data
 
     def _run(self):
-        receiver = imagezmq.ImageHub("tcp://{}:{}".format(self.hostname, self.port), REQ_REP=False)
+        context = zmq.Context()
+        self._sub = context.socket(zmq.SUB)
+        self._sub.setsockopt(zmq.TOS, 16)
+        self._sub.connect('tcp://{}:{}'.format(self.hostname, self.port))
+        self._sub.setsockopt_string(zmq.SUBSCRIBE, '')
         while True:
-            self._data = receiver.recv_jpg()
+            self._data = recv_array(self._sub)
             if(self._data[0] == 'done'):
                 break
             self._recv_time = time.time()
             #print("got {count} at {time}".format(count=self._data[0],time=self._recv_time))
             self.arrival_times[int(self._data[0])] = self._recv_time
             self._data_ready.set()
-        receiver.close()
         self._done.set()
 
     def close(self):

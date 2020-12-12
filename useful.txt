@@ -3,3 +3,6 @@ ffmpeg -i testsrc2.mp4 -an -vcodec libx264 -crf 23 test2src2.h264
 
 https://superuser.com/questions/356907/how-to-get-real-time-network-statistics-in-linux-with-kb-mb-bytes-format-and-for
 sudo tcpdump -i enp0s8 -l -e -n | ./netbps
+
+./patient.py tsrc2.vid tsrc2.vid
+./resanal.py frametimes.dat cmdtimes.dat tsrc2.vid sendtimes.dat
