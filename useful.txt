@@ -6,3 +6,9 @@ sudo tcpdump -i enp0s8 -l -e -n | ./netbps
 
 ./patient.py tsrc2.vid tsrc2.vid
 ./resanal.py frametimes.dat cmdtimes.dat tsrc2.vid sendtimes.dat
+
+https://ask.wireshark.org/question/3580/how-to-get-average-rtt-out-of-tcp-conversation-or-import-rtt-values-to-the-excel/
+ sudo tshark -i vlan258 -Tfields -e "tcp.analysis.ack_rtt" > rtt.log 2> /dev/null
+
+https://www.wireshark.org/lists/wireshark-users/200802/msg00202.html
+tshark -r 5555-patient-c29.pcap -Y "frame contains \"msg\""
