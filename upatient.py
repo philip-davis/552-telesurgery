@@ -15,8 +15,12 @@ import time
 b = threading.Barrier(2)
 
 class VideoStreamer:
-    def __init__(self, port, dgram_payload=1000, framesize=8000, nframes=3600, tos=0):
+    def __init__(self, port, dgram_payload=1000, framesize=80000, nframes=3600, tos=0):
+        SO_TIMESTAMPING = 37
+        TIMESTAMPING_TX_HARDWARE = 1
+        SOF_TIMESTAMPING_RAW_HARDWARE = 64
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, SO_TIMESTAMPING, TIMESTAMPING_TX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE)
         self.sock.bind(('', port))
         self.serial = 0
         self.fsize = framesize
@@ -39,6 +43,7 @@ class VideoStreamer:
         payload_dgram[16:] = [170 for i in range(self.dgram_payload)]       
  
         def send_frame_header(frame_id, payload_count):
+            print(frame_id)
             dgram_seq = self.gen_seq()
             frame_size = self.dgram_payload * payload_count
             for i in range(4):
@@ -71,9 +76,22 @@ class VideoStreamer:
             for frame_id in range(self.nframes):
                 b.wait(2)
                 send_frame(frame_id)
+                
                 wait_time = (start_time + (0.033 * (frame_id + 1))) - time.time()
-                if wait_time > 0:
-                    time.sleep(wait_time)
+                if(wait_time > 0):
+                    self.sock.settimeout(wait_time)
+                    try:
+                        raw_data, ancdata, flags, address = self.sock.recvmsg(4096, 1024)
+                        print(ancdata)
+                    except Exception:
+                        pass
+                    self.sock.settimeout(None)
+                    wait_time = (start_time + (0.033 * (frame_id + 1))) - time.time()
+                    if wait_time > 0:
+                        time.sleep(wait_time)
+                
+                #raw_data, ancdata, flags, address = self.sock.recvmsg(4096, 1024)
+                #print(ancdata)
             # terminator
             send_frame_header(self.nframes, 0)
         finally:
