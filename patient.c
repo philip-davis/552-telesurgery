@@ -144,6 +144,32 @@ long get_wait_usec(struct timeval *stime, int frame_id)
     
 }
 
+static void recvpacket(int sock, int recvmsg_flags)
+{
+    char data[256];
+	struct msghdr msg;
+	struct iovec entry;
+	struct sockaddr_in from_addr;
+	struct {
+		struct cmsghdr cm;
+		char control[512];
+	} control;
+	int res;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &entry;
+	msg.msg_iovlen = 1;
+	entry.iov_base = data;
+	entry.iov_len = sizeof(data);
+	msg.msg_name = (caddr_t)&from_addr;
+	msg.msg_namelen = sizeof(from_addr);
+	msg.msg_control = &control;
+	msg.msg_controllen = sizeof(control);
+
+	res = recvmsg(sock, &msg, recvmsg_flags|MSG_DONTWAIT);
+	printf("%d\n", res);    
+}
+
 void *run_video_stream(void *optsv)
 {
     struct vstream vs = {0};
@@ -170,10 +196,12 @@ void *run_video_stream(void *optsv)
     for(i = 0; i < vs.opts->nframes; i++) {
         pthread_barrier_wait(&barrier);
         send_frame(&vs, i);
-        wait_usec = get_wait_usec(&start_time, i);
-        if(wait_usec > 0) {    
-            usleep(wait_usec);
-        }
+        do {
+            wait_usec = get_wait_usec(&start_time, i);
+            if(wait_usec > 0) {
+    			recvpacket(vs.sock, MSG_ERRQUEUE);            
+            }   
+        }while(wait_usec > 0);
     }
     send_frame_header(&vs, vs.opts->nframes, 0);
     close(vs.sock);
