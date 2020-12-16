@@ -53,7 +53,7 @@ class VideoStreamSubscriber:
             if len(dgram) == 16:
                 serial, frame_id, dcount, frame_size = decode_header(dgram)
                 print(frame_id)
-                self.frames[frame_id] = { 'htime':timestamp, 'dcount':dcount, 'dtimes': {}, 'fsize':frame_size, 'brecv':0}
+                self.frames[frame_id] = { 'shtime':time.time(), 'sdtimes': {}, 'htime':timestamp, 'dcount':dcount, 'dtimes': {}, 'fsize':frame_size, 'brecv':0}
                 if dcount == 0:
                     print("got terminator")
                     return False
@@ -62,6 +62,7 @@ class VideoStreamSubscriber:
                 serial, frame_id, seq, frame_size = decode_payload(dgram)
                 self.frames[frame_id]['brecv'] += payload_size
                 self.frames[frame_id]['dtimes'][seq] = timestamp
+                self.frames[frame_id]['sdtimes'][seq] = time.time()
             return True
         try:
             data = bytearray(10)

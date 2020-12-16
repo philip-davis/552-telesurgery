@@ -7,6 +7,8 @@ import numpy as np
 from statistics import stdev
 import matplotlib.pyplot as plt
 
+sfx = sys.argv[3]
+
 with open(sys.argv[1], 'r') as reader:
     tx_ts = list()
     for line in reader.readlines():
@@ -36,7 +38,9 @@ for idx in range(len(tx_ts)):
             rts = surg['right'][frame_id]['htime']
         except KeyError:
             rts = 0.    
-        rx_ts.append((seq, lts, rts))
+        lswts = surg['left'][frame_id]['shtime']
+        rswts = surg['right'][frame_id]['shtime']
+        rx_ts.append((seq, lts, rts, lswts, rswts))
     else:
         fseq = (seq % (dcount + 1)) - 1
         try:    
@@ -47,7 +51,9 @@ for idx in range(len(tx_ts)):
             rts = surg['right'][frame_id]['dtimes'][fseq]
         except KeyError:
             rts = 0.
-        rx_ts.append((seq, lts, rts))
+        lswts = surg['left'][frame_id]['sdtimes'][fseq]
+        rswts = surg['right'][frame_id]['sdtimes'][fseq]
+        rx_ts.append((seq, lts, rts, lswts, rswts))
 
 tx_pkt_disp = [abs(i[1] - i[2]) for i in tx_ts]
 rx_pkt_disp = [abs(i[1] - i[2]) for i in rx_ts]
@@ -78,12 +84,16 @@ time_list = list()
 clean_tx_disp = list()
 clean_rx_disp = list()
 net_disp = list()
+rx_sw_disp = list()
+rx_stack_disp = list()
 for seq in range(len(tx_ts)):
     if tx_ts[seq][1] != 0 and tx_ts[seq][2] != 0 and rx_ts[seq][1] != 0 and rx_ts[seq][2] != 0:
         clean_tx_disp.append(abs(tx_ts[seq][1] - tx_ts[seq][2]))
         clean_rx_disp.append(abs(rx_ts[seq][1] - rx_ts[seq][2]))
         net_disp.append((abs(tx_ts[seq][1] - tx_ts[seq][2])) - (abs(rx_ts[seq][1] - rx_ts[seq][2])))
         time_list.append(tx_ts[seq][1] - tx_ts[0][1])
+        rx_sw_disp.append(abs(rx_ts[seq][3] - rx_ts[seq][4]))
+        rx_stack_disp.append(rx_sw_disp[-1] - clean_rx_disp[-1])
         
 print("all times in seconds:")
 print(" average tx pkt disp: ", np.average(clean_tx_disp))
@@ -94,15 +104,22 @@ print(" stdev tx pkt disp: ", stdev(clean_tx_disp))
 print(" stdev rx pkt disp: ", stdev(clean_rx_disp))
 print(" average net pkt disp: ", np.average(net_disp))
 print(" max net pkt disp: ", max(net_disp))
-print(" min net pkg disp: ", min(net_disp))
-print(" stdev net pkg disp: ", stdev(net_disp))
+print(" min net pkt disp: ", min(net_disp))
+print(" stdev net pkt disp: ", stdev(net_disp))
+print(" average sw rx pkt disp: ", np.average(rx_sw_disp))
+print(" max sw rx pkt disp: ", max(rx_sw_disp))
+print(" stdev sw rx pkt disp: ", stdev(rx_sw_disp))
+print(" average rx stack pkt disp: ", np.average(rx_stack_disp))
+print(" max rx stack pkt disp: ", max(rx_stack_disp))
+print(" min rx stack pkg disp: ", min(rx_stack_disp))
+print(" stdev rx stack pkg disp: ", stdev(rx_stack_disp))
 
 """
 for i in range(len(tx_pkt_disp)):
-    if(tx_pkt_disp[i] == max(tx_pkt_disp)):
-        print(tx_pkt_disp[i])
-        print(tx_ts[i])
-        print(rx_ts[i])
+    if(net_disp[i] == min(net_disp)):
+        print(i, net_disp[i])
+        print(tx_ts[i][1], tx_ts[i][2])
+        print(rx_ts[i][1], rx_ts[i][2])
 """
 
 fig, ax1 = plt.subplots()
@@ -113,13 +130,31 @@ ax1.plot(time_list, clean_rx_disp, color='blue', label='surgeon (rx)')
 ax1.legend()
 
 fig.tight_layout()
-plt.savefig("pkt_disp.png")
+plt.savefig("pkt_disp_{}.png".format(sfx))
 
 plt.figure(2)
 fig, ax1 = plt.subplots()
 ax1.set_xlabel('time (s)')
 ax1.set_ylabel('net packet disparity (s)')
-ax1.plot(time_list, net_disp, color='green')
+ax1.set_ylim(-4e-5, 4e-5)
+ax1.scatter(time_list, net_disp, color='green')
 
 fig.tight_layout()
-plt.savefig("net_pkt_disp.png")
+plt.savefig("net_pkt_disp_{}.png".format(sfx))
+
+plt.figure(3)
+fig, ax1 = plt.subplots()
+ax1.set_xlabel('net packet disparity (s)')
+ax1.hist(net_disp, bins=[-3e-5, -1.5e-5, -5e-6, 5e-6, 1.5e-5])
+
+fig.tight_layout()
+plt.savefig("net_pkt_hist_{}.png".format(sfx))
+
+plt.figure(4)
+fig, ax1 = plt.subplots()
+ax1.set_xlabel('time (s)')
+ax1.set_ylabel('stack packet disparity (s)')
+ax1.scatter(time_list, rx_stack_disp, color='orange')
+
+fig.tight_layout()
+plt.savefig("stack_pkt_disp_{}.png".format(sfx))
