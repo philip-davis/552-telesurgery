@@ -90,8 +90,8 @@ class VideoStreamer:
                     if wait_time > 0:
                         time.sleep(wait_time)
                 
-                #raw_data, ancdata, flags, address = self.sock.recvmsg(4096, 1024)
-                #print(ancdata)
+                raw_data, ancdata, flags, address = self.sock.recvmsg(4096, 1024)
+                print(ancdata)
             # terminator
             send_frame_header(self.nframes, 0)
         finally:

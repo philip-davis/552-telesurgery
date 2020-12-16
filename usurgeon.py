@@ -2,6 +2,7 @@
 
 """https://github.com/jeffbass/imagezmq/blob/master/examples/pub_sub_receive.py"""
 """https://zguide.zeromq.org/docs/chapter1/"""
+"""https://stackoverflow.com/questions/46302308/python-networking-timestamp-so-timestamp-so-timestampns-so-timestamping"""
 
 import sys
 import threading
@@ -13,7 +14,9 @@ class VideoStreamSubscriber:
 
     def __init__(self, hostname, port):
         self._done = threading.Event()
+        SO_TIMESTAMPNS = 35
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, SO_TIMESTAMPNS, 1)
         self.patient_addr = (hostname, port)
         self.frames = {}
         self._thread = threading.Thread(target=self._run, args=())
@@ -37,7 +40,12 @@ class VideoStreamSubscriber:
 
         def recv_dgram():
             dgram, addr = self.sock.recvfrom(4096)
- 
+            """
+            dgram, ancdata, flags, addr = self.sock.recvmsg(4096, 1024)
+            if(len(ancdata) > 0):
+                print("got ancdata")
+            """
+
             if len(dgram) == 16:
                 serial, frame_id, dcount, frame_size = decode_header(dgram)
                 self.frames[frame_id] = { 'htime':time.time(), 'dcount':dcount, 'dtimes': {}, 'fsize':frame_size, 'brecv':0}
