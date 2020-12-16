@@ -9,12 +9,14 @@ import threading
 import time
 import pickle
 import socket
+import struct
+
+SO_TIMESTAMPNS = 35
 
 class VideoStreamSubscriber:
 
     def __init__(self, hostname, port):
         self._done = threading.Event()
-        SO_TIMESTAMPNS = 35
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, SO_TIMESTAMPNS, 1)
         self.patient_addr = (hostname, port)
@@ -25,30 +27,33 @@ class VideoStreamSubscriber:
 
     def _run(self):
         def decode_header(dgram):
-            serial = int.from_bytes(dgram[0:4], byteorder='big')
-            frame_id = int.from_bytes(dgram[4:8], byteorder='big')
-            dgram_count = int.from_bytes(dgram[8:12], byteorder='big')
-            frame_size = int.from_bytes(dgram[12:16], byteorder='big')
+            serial = int.from_bytes(dgram[0:4], byteorder='little')
+            frame_id = int.from_bytes(dgram[4:8], byteorder='little')
+            dgram_count = int.from_bytes(dgram[8:12], byteorder='little')
+            frame_size = int.from_bytes(dgram[12:16], byteorder='little')
             return serial, frame_id, dgram_count, frame_size        
 
         def decode_payload(dgram):
-            serial = int.from_bytes(dgram[0:4], byteorder='big')
-            frame_id = int.from_bytes(dgram[4:8], byteorder='big')
-            seq = int.from_bytes(dgram[8:12], byteorder='big')
-            frame_size = int.from_bytes(dgram[12:16], byteorder='big')
+            serial = int.from_bytes(dgram[0:4], byteorder='little')
+            frame_id = int.from_bytes(dgram[4:8], byteorder='little')
+            seq = int.from_bytes(dgram[8:12], byteorder='little')
+            frame_size = int.from_bytes(dgram[12:16], byteorder='little')
             return serial, frame_id, seq, frame_size
 
         def recv_dgram():
-            dgram, addr = self.sock.recvfrom(4096)
-            """
+            #dgram, addr = self.sock.recvfrom(4096)
             dgram, ancdata, flags, addr = self.sock.recvmsg(4096, 1024)
             if(len(ancdata) > 0):
-                print("got ancdata")
-            """
-
+                for i in ancdata:
+                    if(i[0] != socket.SOL_SOCKET or i[1] != SO_TIMESTAMPNS):
+                        continue
+                    tmp=(struct.unpack("iiii",i[2]))
+                    timestamp = tmp[0] + tmp[2]*1e-10
+                    
             if len(dgram) == 16:
                 serial, frame_id, dcount, frame_size = decode_header(dgram)
-                self.frames[frame_id] = { 'htime':time.time(), 'dcount':dcount, 'dtimes': {}, 'fsize':frame_size, 'brecv':0}
+                print(frame_id)
+                self.frames[frame_id] = { 'htime':timestamp, 'dcount':dcount, 'dtimes': {}, 'fsize':frame_size, 'brecv':0}
                 if dcount == 0:
                     print("got terminator")
                     return False
@@ -56,7 +61,7 @@ class VideoStreamSubscriber:
                 payload_size = len(dgram) - 16
                 serial, frame_id, seq, frame_size = decode_payload(dgram)
                 self.frames[frame_id]['brecv'] += payload_size
-                self.frames[frame_id]['dtimes'][seq] = time.time()
+                self.frames[frame_id]['dtimes'][seq] = timestamp
             return True
         try:
             data = bytearray(10)

@@ -42,6 +42,11 @@ struct vstream {
     struct sockaddr s_addr;
 };
 
+struct seq_ts {
+    int seq;
+    struct timeval tstamp;
+};
+
 int init_socket(const char *interface, int port)
 {
     int sock;
@@ -52,7 +57,7 @@ int init_socket(const char *interface, int port)
     struct sockaddr_in addr;
     
     // enable timestamps on socket
-    ts_flags = SOF_TIMESTAMPING_TX_HARDWARE;
+    ts_flags = SOF_TIMESTAMPING_TX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE;
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(sock == -1) {
         perror("sock");
@@ -144,6 +149,28 @@ long get_wait_usec(struct timeval *stime, int frame_id)
     
 }
 
+static int extract_tstamp(struct msghdr *msg, int res,
+            char *data,
+            int sock, int recvmsg_flags, struct timespec *result)
+{
+    struct cmsghdr *cmsg;
+    int seq;
+
+    for (cmsg = CMSG_FIRSTHDR(msg);
+         cmsg;
+         cmsg = CMSG_NXTHDR(msg, cmsg)) {
+        if(cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMPING) {
+            *result = *(((struct timespec *)CMSG_DATA(cmsg))+2);
+            seq = *((uint32_t *)&data[42]);
+            break;
+        }
+    }
+    printf("seq %d: %ld.%09ld\n", seq, (long)result->tv_sec, (long)result->tv_nsec);
+
+    return seq;
+} 
+
+/*
 static void printpacket(struct msghdr *msg, int res,
 			char *data,
 			int sock, int recvmsg_flags)
@@ -194,7 +221,6 @@ static void printpacket(struct msghdr *msg, int res,
 				       (long)stamp->tv_sec,
 				       (long)stamp->tv_nsec);
 				stamp++;
-				/* skip deprecated HW transformed */
 				stamp++;
 				printf("HW raw %ld.%09ld",
 				       (long)stamp->tv_sec,
@@ -223,10 +249,14 @@ static void printpacket(struct msghdr *msg, int res,
 #endif
 					);
                 printf("\n");
-                for(int i = 36; i<64; i++)
+		uint32_t seq = *((uint32_t *)&data[42]);
+		printf("seq = %u\n", seq);
+		
+                for(int i = 0; i<16; i++)
                     printf("%02X", (unsigned char)(data)[i]);
 				printf("\n");
-                if (res < sizeof(sync))
+                
+		if (res < sizeof(sync))
 					printf(" => truncated data?!");
 				else if (!memcmp(sync, data + res - sizeof(sync),
 							sizeof(sync)))
@@ -255,9 +285,9 @@ static void printpacket(struct msghdr *msg, int res,
 	}
 
 }
+*/
 
-
-static void recvpacket(int sock, int recvmsg_flags)
+static int recvpacket(int sock, int recvmsg_flags, struct timespec *tstamp)
 {
     char data[256];
 	struct msghdr msg;
@@ -282,9 +312,11 @@ static void recvpacket(int sock, int recvmsg_flags)
 
 	res = recvmsg(sock, &msg, recvmsg_flags|MSG_DONTWAIT);
 	if(res > 0) {
-		printpacket(&msg, res, data,
-			    sock, recvmsg_flags);
-	}
+		//printpacket(&msg, res, data,
+		//	    sock, recvmsg_flags);
+	    return(extract_tstamp(&msg, res, data, 
+                            sock, recvmsg_flags, tstamp));
+    }
 }
 
 /*
@@ -321,9 +353,17 @@ void *run_video_stream(void *optsv)
     struct timeval start_time;
     int addrlen;
     int wait_usec;
+    int ts_seq;
+    struct timespec tstamp;
+    int npackets;
+    struct timespec *ts_results;
     int i;
 
     vs.opts = (struct vs_opts *)optsv;
+
+    npackets = vs.opts->nframes * (1 + vs.opts->frame_size / vs.opts->dgram_payload);
+    printf("%d packets total in the stream.\n", npackets);
+    ts_results = calloc(npackets, sizeof(*ts_results));    
 
     vs.sock = init_socket(vs.opts->interface, vs.opts->port);
     
@@ -342,7 +382,8 @@ void *run_video_stream(void *optsv)
         do {
             wait_usec = get_wait_usec(&start_time, i);
             if(wait_usec > 0) {
-    			recvpacket(vs.sock, MSG_ERRQUEUE);            
+    			ts_seq = recvpacket(vs.sock, MSG_ERRQUEUE, &tstamp);
+                ts_results[ts_seq] = tstamp;          
             }   
         }while(wait_usec > 0);
     }
