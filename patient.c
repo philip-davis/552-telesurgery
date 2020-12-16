@@ -165,7 +165,7 @@ static int extract_tstamp(struct msghdr *msg, int res,
             break;
         }
     }
-    printf("seq %d: %ld.%09ld\n", seq, (long)result->tv_sec, (long)result->tv_nsec);
+    //printf("seq %d: %ld.%09ld\n", seq, (long)result->tv_sec, (long)result->tv_nsec);
 
     return seq;
 } 
@@ -391,29 +391,31 @@ void *run_video_stream(void *optsv)
     close(vs.sock);
 
     free(vs.padp);
-    pthread_exit(NULL);
+    pthread_exit(ts_results);
 }
 
 int main(int argc, char **argv)
 {
-    struct vs_opts l_opts = {
-        .port = 5555,
-        .dgram_payload = 1000,
-        .frame_size = 80000,
-        .nframes = 300,
-        .tos = 0
-    };
-    struct vs_opts r_opts = {
-        .port = 5556,
-        .dgram_payload = 1000,
-        .frame_size = 80000,
-        .nframes = 300,
-        .tos = 0
-    };
+    size_t dgram_payload = 1000;
+    size_t frame_size = 80000;
+    int nframes = 300;
+    int tos = 0;
+    struct vs_opts l_opts, r_opts;
     pthread_t l_thread, r_thread;
+    struct timespec *l_results, *r_results;
+    int npackets;
+    FILE *resfile;
+    int i;
 
-    if(argc < 2) {
-        fprintf(stderr, "usage: patient <interface>\n");
+    l_opts.port = 5555;
+    r_opts.port = 5556;
+    l_opts.dgram_payload = r_opts.dgram_payload = dgram_payload;
+    l_opts.frame_size = r_opts.frame_size = frame_size;
+    l_opts.nframes = r_opts.nframes = nframes;
+    l_opts.tos = r_opts.tos = tos;
+
+    if(argc < 3) {
+        fprintf(stderr, "usage: patient <interface> <result_file>\n");
         return(-1);
     }
 
@@ -425,8 +427,20 @@ int main(int argc, char **argv)
     pthread_create(&l_thread, NULL, run_video_stream, &l_opts);
     pthread_create(&r_thread, NULL, run_video_stream, &r_opts);
  
-    pthread_join(l_thread, NULL);
-    pthread_join(r_thread, NULL);
+    pthread_join(l_thread, (void **)&l_results);
+    pthread_join(r_thread, (void **)&r_results);;
    
+    npackets = nframes * (1 + (frame_size / dgram_payload));
+
+    resfile = fopen(argv[2], "w");
+    for(i = 0; i < npackets; i++) {
+        fprintf(resfile, "%d,%ld.%09ld,%ld.%09ld\n", i, l_results[i].tv_sec, l_results[i].tv_nsec, r_results[i].tv_sec, r_results[i].tv_nsec);
+    }
+
+    fclose(resfile);
+
+    free(l_results);
+    free(r_results);
+
     return 0;
 }

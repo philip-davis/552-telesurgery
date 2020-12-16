@@ -48,7 +48,7 @@ class VideoStreamSubscriber:
                     if(i[0] != socket.SOL_SOCKET or i[1] != SO_TIMESTAMPNS):
                         continue
                     tmp=(struct.unpack("iiii",i[2]))
-                    timestamp = tmp[0] + tmp[2]*1e-10
+                    timestamp = tmp[0] + tmp[2]*1e-9
                     
             if len(dgram) == 16:
                 serial, frame_id, dcount, frame_size = decode_header(dgram)
