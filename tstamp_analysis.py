@@ -82,7 +82,6 @@ for idx in range(len(tx_ts)):
         rx_ts.append((seq, lts, rts, lswts, rswts))
 """
 
-
 tx_pkt_disp = [abs(i[1] - i[2]) for i in tx_ts]
 rx_pkt_disp = [abs(i[1] - i[2]) for i in rx_ts]
 
@@ -114,6 +113,7 @@ clean_rx_disp = list()
 net_disp = list()
 rx_sw_disp = list()
 rx_stack_disp = list()
+faux_latency = list()
 for seq in range(len(tx_ts)):
     if tx_ts[seq][1] != 0 and tx_ts[seq][2] != 0 and rx_ts[seq][1] != 0 and rx_ts[seq][2] != 0:
         clean_tx_disp.append(tx_ts[seq][1] - tx_ts[seq][2])
@@ -122,7 +122,10 @@ for seq in range(len(tx_ts)):
         time_list.append(tx_ts[seq][1] - tx_ts[0][1])
         rx_sw_disp.append(rx_ts[seq][3] - rx_ts[seq][4])
         rx_stack_disp.append(rx_sw_disp[-1] - clean_rx_disp[-1])
-       
+        l_delay = rx_ts[seq][1] - tx_ts[seq][1]
+        r_delay = rx_ts[seq][2] - tx_ts[seq][2]
+        faux_latency.append((l_delay + r_delay) / 2.)
+
 lost = l_rx_lost + r_rx_lost
 print("lost {lost} packets out of {np}".format(lost=lost,np=pkt_count))
 print("\nall times in seconds:")
@@ -187,3 +190,12 @@ ax1.scatter(time_list, rx_stack_disp, color='orange')
 
 fig.tight_layout()
 plt.savefig("stack_pkt_disp_{}.png".format(sfx))
+
+plt.figure(5)
+fig, ax1 = plt.subplots()
+ax1.set_xlabel('latency (s)')
+ax1.set_ylabel('net packet disparity (s)')
+ax1.scatter(faux_latency, net_disp, color='purple')
+
+fig.tight_layout()
+plt.savefig("latency_net_{}.png".format(sfx)), 

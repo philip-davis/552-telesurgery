@@ -13,3 +13,6 @@ https://ask.wireshark.org/question/3580/how-to-get-average-rtt-out-of-tcp-conver
 https://www.wireshark.org/lists/wireshark-users/200802/msg00202.html
 tshark -r 5555-patient-c29.pcap -Y "frame contains \"msg\""
 ./tstamp_analysis.py txstamps.dat surg.dat
+
+iperf -s -u
+iperf -c 10.10.1.2 -u -b 20m -t 600
