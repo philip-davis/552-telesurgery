@@ -21,6 +21,7 @@ class VideoStreamSubscriber:
         self.sock.setsockopt(socket.SOL_SOCKET, SO_TIMESTAMPNS, 1)
         self.patient_addr = (hostname, port)
         self.frames = {}
+        self.packets = {}
         self._thread = threading.Thread(target=self._run, args=())
         self._thread.daemon = True
         self._thread.start()
@@ -41,8 +42,8 @@ class VideoStreamSubscriber:
             return serial, frame_id, seq, frame_size
 
         def recv_dgram():
-            #dgram, addr = self.sock.recvfrom(4096)
             dgram, ancdata, flags, addr = self.sock.recvmsg(4096, 1024)
+            swts = time.time()
             if(len(ancdata) > 0):
                 for i in ancdata:
                     if(i[0] != socket.SOL_SOCKET or i[1] != SO_TIMESTAMPNS):
@@ -53,16 +54,18 @@ class VideoStreamSubscriber:
             if len(dgram) == 16:
                 serial, frame_id, dcount, frame_size = decode_header(dgram)
                 print(frame_id)
-                self.frames[frame_id] = { 'shtime':time.time(), 'sdtimes': {}, 'htime':timestamp, 'dcount':dcount, 'dtimes': {}, 'fsize':frame_size, 'brecv':0}
+                self.frames[frame_id] = { 'shtime':swts, 'sdtimes': {}, 'htime':timestamp, 'dcount':dcount, 'dtimes': {}, 'fsize':frame_size, 'brecv':0}
                 if dcount == 0:
                     print("got terminator")
                     return False
             else:
                 payload_size = len(dgram) - 16
                 serial, frame_id, seq, frame_size = decode_payload(dgram)
-                self.frames[frame_id]['brecv'] += payload_size
-                self.frames[frame_id]['dtimes'][seq] = timestamp
-                self.frames[frame_id]['sdtimes'][seq] = time.time()
+                if frame_id in self.frames:
+                    self.frames[frame_id]['brecv'] += payload_size
+                    self.frames[frame_id]['dtimes'][seq] = timestamp
+                    self.frames[frame_id]['sdtimes'][seq] = swts
+            self.packets[serial] = (swts, timestamp)
             return True
         try:
             data = bytearray(10)
@@ -89,6 +92,6 @@ r_receiver = VideoStreamSubscriber(sys.argv[1], 5556)
 l_receiver.close()
 r_receiver.close()
 
-results = {"left":l_receiver.frames,"right":r_receiver.frames}
+results = {"left":l_receiver.frames,"right":r_receiver.frames, "lprecv":l_receiver.packets, "rprecv":r_receiver.packets}
 with open(sys.argv[2], 'wb') as filehandle:
     pickle.dump(results, filehandle)

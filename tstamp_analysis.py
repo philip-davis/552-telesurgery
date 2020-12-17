@@ -24,8 +24,34 @@ with open(sys.argv[2], 'rb') as reader:
 
 dcount = surg['left'][0]['dcount']
 fcount = int(len(tx_ts) / (dcount + 1))
+raw_l_rx_ts = surg['lprecv']
+raw_r_rx_ts = surg['rprecv']
+
+l_rx_lost = 0
+r_rx_lost = 0
+pkt_count = 2 * len(tx_ts)
 
 rx_ts = list()
+for idx in range(len(tx_ts)):
+    if idx not in raw_l_rx_ts:
+        l_rx_lost += 1
+    if idx not in raw_r_rx_ts:
+        r_rx_lost += 1
+    try:
+        lswts = raw_l_rx_ts[idx][0]
+        lts = raw_l_rx_ts[idx][1]
+    except KeyError:
+        lswts = 0.
+        lts = 0.
+    try:
+        rswts = raw_r_rx_ts[idx][0]
+        rts = raw_r_rx_ts[idx][1]
+    except KeyError:
+        rswts = 0.
+        lts = 0.
+    rx_ts.append((idx, lts, rts, lswts, rswts))
+
+"""
 for idx in range(len(tx_ts)):
     seq = tx_ts[idx][0]
     frame_id = floor(seq / (dcount + 1))
@@ -43,7 +69,7 @@ for idx in range(len(tx_ts)):
         rx_ts.append((seq, lts, rts, lswts, rswts))
     else:
         fseq = (seq % (dcount + 1)) - 1
-        try:    
+        try:
             lts = surg['left'][frame_id]['dtimes'][fseq]
         except KeyError:
             lts = 0.    
@@ -54,6 +80,8 @@ for idx in range(len(tx_ts)):
         lswts = surg['left'][frame_id]['sdtimes'][fseq]
         rswts = surg['right'][frame_id]['sdtimes'][fseq]
         rx_ts.append((seq, lts, rts, lswts, rswts))
+"""
+
 
 tx_pkt_disp = [abs(i[1] - i[2]) for i in tx_ts]
 rx_pkt_disp = [abs(i[1] - i[2]) for i in rx_ts]
@@ -88,14 +116,16 @@ rx_sw_disp = list()
 rx_stack_disp = list()
 for seq in range(len(tx_ts)):
     if tx_ts[seq][1] != 0 and tx_ts[seq][2] != 0 and rx_ts[seq][1] != 0 and rx_ts[seq][2] != 0:
-        clean_tx_disp.append(abs(tx_ts[seq][1] - tx_ts[seq][2]))
-        clean_rx_disp.append(abs(rx_ts[seq][1] - rx_ts[seq][2]))
-        net_disp.append((abs(tx_ts[seq][1] - tx_ts[seq][2])) - (abs(rx_ts[seq][1] - rx_ts[seq][2])))
+        clean_tx_disp.append(tx_ts[seq][1] - tx_ts[seq][2])
+        clean_rx_disp.append(rx_ts[seq][1] - rx_ts[seq][2])
+        net_disp.append(clean_rx_disp[-1] - clean_tx_disp[-1])
         time_list.append(tx_ts[seq][1] - tx_ts[0][1])
-        rx_sw_disp.append(abs(rx_ts[seq][3] - rx_ts[seq][4]))
+        rx_sw_disp.append(rx_ts[seq][3] - rx_ts[seq][4])
         rx_stack_disp.append(rx_sw_disp[-1] - clean_rx_disp[-1])
-        
-print("all times in seconds:")
+       
+lost = l_rx_lost + r_rx_lost
+print("lost {lost} packets out of {np}".format(lost=lost,np=pkt_count))
+print("\nall times in seconds:")
 print(" average tx pkt disp: ", np.average(clean_tx_disp))
 print(" average rx pkt disp: ", np.average(clean_rx_disp))
 print(" max tx pkt disp: ", max(clean_tx_disp))
@@ -136,7 +166,6 @@ plt.figure(2)
 fig, ax1 = plt.subplots()
 ax1.set_xlabel('time (s)')
 ax1.set_ylabel('net packet disparity (s)')
-ax1.set_ylim(-4e-5, 4e-5)
 ax1.scatter(time_list, net_disp, color='green')
 
 fig.tight_layout()
@@ -145,7 +174,7 @@ plt.savefig("net_pkt_disp_{}.png".format(sfx))
 plt.figure(3)
 fig, ax1 = plt.subplots()
 ax1.set_xlabel('net packet disparity (s)')
-ax1.hist(net_disp, bins=[-3e-5, -1.5e-5, -5e-6, 5e-6, 1.5e-5])
+ax1.hist(net_disp)
 
 fig.tight_layout()
 plt.savefig("net_pkt_hist_{}.png".format(sfx))
