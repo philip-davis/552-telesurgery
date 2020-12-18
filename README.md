@@ -105,10 +105,15 @@ The `generate_results.sh` will analyze the ouputs of `patient` and `surgeon.py` 
 <something>.dir/
    <something>.txt - summary statistics
    results_<something>.csv - a comma-seperated list of <something>,average disparity, max disparity, stdev of disparity
+   
    pkt_disp_<something>.png - TX- and RX-side disparities over time graphed together based on NIC timers
+   
    net_pkt_disp_<something>.png - difference between TX and RX-side disparities based on NIC timers
+   
    net_pkt_hist_<something>.png - histogram of the net_pkt_disp_<something> data
+   
    stack_pkt_disp_<something>.png - difference between disparity measured by RX NIC timer and disparity measured in the application using software timers.
+   
    latency_net_<something>.png - a graph of net disparity as measured at the NIC vs average latency of the pair of packets
    The original data files from the two applications.
 ```
