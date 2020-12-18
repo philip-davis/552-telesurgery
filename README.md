@@ -19,14 +19,14 @@ The surgeon program (`usurgeon.py`) should be run on the surgeon node and the pa
 
 `sudo ./patient vlan1132 patient.dat`
 
-If you are using the included CloudLab profile, `vlan1132` should be replaced with whichever address is carrying the IP `10.10.2.2`. To work with the results-collecting script, the output file should have the format `patient_<something>.dat`, where <something> is arbitrary.
+If you are using the included CloudLab profile, `vlan1132` should be replaced with whichever address is carrying the IP `10.10.2.2`. To work with the results-collecting script, the output file should have the format `patient_<something>.dat`, where \<something\> is arbitrary.
 
 ### Running `usurgeon.py`
 `usurgeon.py` takes two arguments: the target IP (the one that `patient` is listening on) and an output file. If you are using the attached `profile1.xml`, this looks like:
 
 `./usurgeon.py 10.10.2.2 surgeon.dat`
 
-To work with the results-collecting script, the output file should have the format `surgeon_<something>.dat`, where <something> matches whatever was used in `patient`.
+To work with the results-collecting script, the output file should have the format `surgeon_<something>.dat`, where \<something\> matches whatever was used in `patient`.
 
 If everything works correcltly, you will see the two programs marching through 300 frames in lockstep:
 
@@ -91,7 +91,7 @@ done
 It is normal and expected that each number will appear twice.
 
 ## Adding interference traffic
-There are two nodes for generating interference traffic. Traffic sent in the direction `interfere-2 -> interfere-1` will be competetive with the video stream traffic. The `iperf` utility can be used to generate this interfering traffic.
+There are two nodes for generating interference traffic. Traffic sent in the direction `interfere-2 -> interfere-1` will be competitive with the video stream traffic. The `iperf` utility can be used to generate this interfering traffic.
 
 On `interfere-1`, run `iperf -s -u`, and on `interfere-2` run `iperf -c 10.10.1.2 -u -b 20m -t 600 -i 10`. This will generate 10 minutes of 20Mbit/s UDP traffic. This should be running during all non-baseline experiments.
 
@@ -99,7 +99,7 @@ On `interfere-1`, run `iperf -s -u`, and on `interfere-2` run `iperf -c 10.10.1.
 The script `traffic_control_r1.bash` should be run on the `router` node. This is an interactive script that will iteratively configure different queuing displines, waiting for the user to run the simulation and retrieve results at each different configuration. `traffic_control_r1.bash` takes an argument of the surgeon-facing interface; in the Cloudlab profile, it is the interface that carries `10.10.1.1`.
 
 ## Collecting results
-The `generate_results.sh` will analyze the ouputs of `patient` and `surgeon.py` and package-up graphs and data in a tarball for easy export. `generate_results.sh` takes a single argument: the suffix that was used in the patient and surgeon output files, i.e. <something> in `patient_<something>.dat`. This will produce `<something>.tar` with the following contents:
+The `generate_results.sh` will analyze the ouputs of `patient` and `surgeon.py` and package-up graphs and data in a tarball for easy export. `generate_results.sh` takes a single argument: the suffix that was used in the patient and surgeon output files, i.e. \<something\> in `patient_<something>.dat`. This will produce `<something>.tar` with the following contents:
   
 ```
 <something>.dir/
