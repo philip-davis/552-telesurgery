@@ -1,0 +1,6 @@
+patient.py - ZMQ version of patient side - sends prepared video files
+prepare_video.py - converts videos into array of compressed frames
+resanal.py - analyze the output of the ZMQ-based patient/surgeon model
+surgeon.py - ZMQ version of the surgeon side
+upatient.py - udp version of the patient side. Comptible with usurgeon.py, sends fixed-size 
+			frames split into UDP packets.
