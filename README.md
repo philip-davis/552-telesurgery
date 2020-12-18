@@ -118,7 +118,27 @@ The `generate_results.sh` will analyze the ouputs of `patient` and `surgeon.py` 
    The original data files from the two applications.
 ```
 
+## Acknowlegements:
+The zmq version of this code originally was build on the ImageZMQ library, using OpenCV for image manipulation. We moved away from that in stages in order to get better control of packet sending and socket parameters (especially for HW timestamps) but the development and structure benefited from various related forum posts and examples:
 
+Example we followed for video frame manipulation:
+https://stackoverflow.com/questions/33311153/python-extracting-and-saving-video-frames
+
+- When we went to native zmq instead of imagezmq, this code was helpful. The `send_array` function especially especially benefits from the example. 
+https://github.com/jeffbass/imagezmq/blob/master/examples/pub_sub_broadcast.py
+
+- The above was apparently a mutated version of what can be found here
+https://pyzmq.readthedocs.io/en/latest/serialization.html
+
+- Our pub/sub code in the zmq-native version followed the instructions here:
+https://zguide.zeromq.org/docs/chapter1/
+
+- `usurgeon.py` benefited from this forum post in its timestamp collectionL
+https://stackoverflow.com/questions/46302308/python-networking-timestamp-so-timestamp-so-timestampns-so-timestamping
+
+- `patient` follows several different examples on how to collect TX hardware timestamps:
+https://elixir.bootlin.com/linux/v4.2/source/Documentation/networking/timestamping/timestamping.c
+https://github.com/majek/openonload/blob/master/src/tests/onload/hwtimestamping/tx_timestamping.c
 
 
 
