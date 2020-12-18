@@ -55,6 +55,7 @@ int init_socket(const char *interface, int port)
     struct hwtstamp_config hwconfig = {0};
     int ts_flags;
     struct sockaddr_in addr;
+    int tos = 0x16;
 
     // enable timestamps on socket
     ts_flags = SOF_TIMESTAMPING_TX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE;
@@ -85,6 +86,9 @@ int init_socket(const char *interface, int port)
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(port);
+
+    //set TOS
+    setsockopt(sock, IPPROTO_IP, IP_TOS, &tos, sizeof(tos));
 
     if(bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
         perror("bind");

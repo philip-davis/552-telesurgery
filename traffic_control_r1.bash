@@ -3,7 +3,12 @@
 
 # set interface var for bottleneck link to surgeon
 
-IF_r1_bottleneck=eth1 #10.10.5.1
+if [[ $# -ne 1 ]] ; then
+    echo "need the congestion interface as an argument"
+    exit -1
+fi
+
+IF_r1_bottleneck=$1
 
 
 ############
@@ -154,23 +159,17 @@ run "prio"
 
 reset_qdisc
 
-sudo tc qdisc add dev $IF_r1_bottleneck parent 1:1 handle 10: htb default 200
+sudo tc qdisc del dev $IF_r1_bottleneck root
 
-sudo tc class add dev $IF_r1_bottleneck parent 10: classid 10:1 htb rate 50Mbit burst 150k
-
-sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:100 htb rate 30Mbit burst 100k
-
-sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:200 htb rate 20Mbit ceil 30Mbit burst 50k
-
-sudo tc qdisc add dev $IF_r1_bottleneck parent 10:100 handle 100: sfq perturb 10
-
-sudo tc qdisc add dev $IF_r1_bottleneck parent 10:200 handle 200: sfq perturb 10
-
+sudo tc qdisc add dev $IF_r1_bottleneck root handle 10: htb default 300
+sudo tc class add dev $IF_r1_bottleneck parent 10: classid 10:1 htb rate 50Mbit burst 256000
+sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:100 htb rate 20Mbit burst 128000 prio 1 ceil 50Mbit
+sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:200 htb rate 20Mbit burst 128000 prio 1 ceil 50Mbit
+sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:300 htb rate 10Mbit ceil 25Mbit prio 2
+sudo tc qdisc add dev $IF_r1_bottleneck parent 10:100 handle 100: pfifo limit 30
+sudo tc qdisc add dev $IF_r1_bottleneck parent 10:200 handle 200: pfifo limit 30
+sudo tc qdisc add dev $IF_r1_bottleneck parent 10:300 handle 300: pfifo limit 30
 sudo tc filter add dev $IF_r1_bottleneck protocol ip parent 10:0 prio 1 u32 match ip sport 5555 0xffff flowid 10:100
-
-sudo tc filter add dev $IF_r1_bottleneck protocol ip parent 10:0 prio 1 u32 match ip sport 5556 0xffff flowid 10:100
-
-sudo tc filter add dev $IF_r1_bottleneck protocol ip parent 10:0 prio 1 u32 match ip sport 5557 0xffff flowid 10:100
-
+sudo tc filter add dev $IF_r1_bottleneck protocol ip parent 10:0 prio 1 u32 match ip sport 5556 0xffff flowid 10:200
 
 run "htb"

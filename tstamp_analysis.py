@@ -7,6 +7,10 @@ import numpy as np
 from statistics import stdev
 import matplotlib.pyplot as plt
 
+if(len(sys.argv) != 4):
+    print("usage: tstamp_analysis.py <patient file> <surgeon file> <output suffix>")
+    exit(-1)
+
 sfx = sys.argv[3]
 
 with open(sys.argv[1], 'r') as reader:
@@ -127,6 +131,7 @@ for seq in range(len(tx_ts)):
         faux_latency.append((l_delay + r_delay) / 2.)
 
 lost = l_rx_lost + r_rx_lost
+
 print("lost {lost} packets out of {np}".format(lost=lost,np=pkt_count))
 print("\nall times in seconds:")
 print(" average tx pkt disp: ", np.average(clean_tx_disp))
@@ -198,4 +203,11 @@ ax1.set_ylabel('net packet disparity (s)')
 ax1.scatter(faux_latency, net_disp, color='purple')
 
 fig.tight_layout()
-plt.savefig("latency_net_{}.png".format(sfx)), 
+plt.savefig("latency_net_{}.png".format(sfx))
+
+disp_avg = np.average(net_disp)
+disp_max = max(net_disp)
+disp_stdev = stdev(net_disp)
+loss = lost / pkt_count
+with open('results_{}.csv'.format(sfx), 'w') as writer:
+    writer.write('{sfx},{disp_avg},{disp_max},{disp_stdev},{loss}\n'.format(sfx=sfx, disp_avg=disp_avg, disp_max=disp_max, disp_stdev=disp_stdev, loss=loss))
