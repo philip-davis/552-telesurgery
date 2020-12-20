@@ -98,10 +98,10 @@ run "200ms delay test"
 
 reset_qdisc
 
-sudo tc qdisc add dev $IF_r1_bottleneck parent 1:1 handle 10: pfifo limit 30
+sudo tc qdisc add dev $IF_r1_bottleneck parent 1:1 handle 10: pfifo limit 160
 
 
-run "pfifo w/ 30p buffer"
+run "pfifo w/ 128p buffer"
 
 
 # set up a fq qdisc
@@ -163,9 +163,9 @@ sudo tc qdisc del dev $IF_r1_bottleneck root
 
 sudo tc qdisc add dev $IF_r1_bottleneck root handle 10: htb default 300
 sudo tc class add dev $IF_r1_bottleneck parent 10: classid 10:1 htb rate 50Mbit burst 256000
-sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:100 htb rate 20Mbit burst 128000 prio 1 ceil 50Mbit
-sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:200 htb rate 20Mbit burst 128000 prio 1 ceil 50Mbit
-sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:300 htb rate 10Mbit ceil 25Mbit prio 2
+sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:100 htb rate 21Mbit burst 128000 prio 1 ceil 50Mbit
+sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:200 htb rate 21Mbit burst 128000 prio 1 ceil 50Mbit
+sudo tc class add dev $IF_r1_bottleneck parent 10:1 classid 10:300 htb rate 8Mbit ceil 25Mbit prio 2
 sudo tc qdisc add dev $IF_r1_bottleneck parent 10:100 handle 100: pfifo limit 30
 sudo tc qdisc add dev $IF_r1_bottleneck parent 10:200 handle 200: pfifo limit 30
 sudo tc qdisc add dev $IF_r1_bottleneck parent 10:300 handle 300: pfifo limit 30
