@@ -61,6 +61,9 @@ class VideoStreamSubscriber:
             else:
                 payload_size = len(dgram) - 16
                 serial, frame_id, seq, frame_size = decode_payload(dgram)
+                if frame_size == 0:
+                    print("got terminator")
+                    return False
                 if frame_id in self.frames:
                     self.frames[frame_id]['brecv'] += payload_size
                     self.frames[frame_id]['dtimes'][seq] = timestamp

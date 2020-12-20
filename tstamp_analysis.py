@@ -26,8 +26,8 @@ for idx in range(len(tx_ts)):
 with open(sys.argv[2], 'rb') as reader:
     surg=pickle.load(reader)
 
-dcount = surg['left'][0]['dcount']
-fcount = int(len(tx_ts) / (dcount + 1))
+#dcount = surg['left'][0]['dcount']
+#fcount = int(len(tx_ts) / (dcount + 1))
 raw_l_rx_ts = surg['lprecv']
 raw_r_rx_ts = surg['rprecv']
 
@@ -89,6 +89,7 @@ for idx in range(len(tx_ts)):
 tx_pkt_disp = [abs(i[1] - i[2]) for i in tx_ts]
 rx_pkt_disp = [abs(i[1] - i[2]) for i in rx_ts]
 
+"""
 tx_ftimes = list()
 rx_ftimes = list()
 for frame_id in range(fcount):
@@ -104,7 +105,6 @@ for frame_id in range(fcount):
 tx_frame_disp = [abs(i[0] - i[1]) for i in tx_ftimes]
 rx_frame_disp = [abs(i[0] - i[1]) for i in rx_ftimes]
 
-"""
 print("average tx frame disp: ", np.average(tx_frame_disp))
 print("average rx frame disp: ", np.average(rx_frame_disp))
 print("average tx pkt disp: ", np.average(tx_pkt_disp))

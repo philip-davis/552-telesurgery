@@ -129,7 +129,7 @@ void send_frame(struct vstream *vs, int frame_id)
     int i;    
 
     num_pad_packets = vs->opts->frame_size / vs->opts->dgram_payload;
-    send_frame_header(vs, frame_id, num_pad_packets);
+    //send_frame_header(vs, frame_id, num_pad_packets);
 
     for(i = 0; i < num_pad_packets; i++) {
         send_payload_dgram(vs, frame_id, i, num_pad_packets);
@@ -220,7 +220,7 @@ void *run_video_stream(void *optsv)
 
     vs.opts = (struct vs_opts *)optsv;
 
-    npackets = vs.opts->nframes * (1 + vs.opts->frame_size / vs.opts->dgram_payload);
+    npackets = vs.opts->nframes * (vs.opts->frame_size / vs.opts->dgram_payload);
     printf("%d packets total in the stream.\n", npackets);
     ts_results = calloc(npackets, sizeof(*ts_results));    
 
@@ -248,7 +248,8 @@ void *run_video_stream(void *optsv)
             }   
         } while(wait_usec > 0);
     }
-    send_frame_header(&vs, vs.opts->nframes, 0); 
+    //send_frame_header(&vs, vs.opts->nframes, 0); 
+    send_payload_dgram(&vs, 0xFFFF, 0, 0);
 
     close(vs.sock);
     free(vs.padp);
@@ -259,7 +260,7 @@ int main(int argc, char **argv)
 {
     size_t dgram_payload = 1000;
     size_t frame_size = 80000;
-    int nframes = 300;
+    int nframes = 1800;
     int tos = 0;
     struct vs_opts l_opts, r_opts;
     pthread_t l_thread, r_thread;
@@ -291,7 +292,7 @@ int main(int argc, char **argv)
     pthread_join(l_thread, (void **)&l_results);
     pthread_join(r_thread, (void **)&r_results);;
 
-    npackets = nframes * (1 + (frame_size / dgram_payload));
+    npackets = nframes * (frame_size / dgram_payload);
 
     resfile = fopen(argv[2], "w");
     for(i = 0; i < npackets; i++) {
