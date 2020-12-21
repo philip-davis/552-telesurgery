@@ -16,3 +16,5 @@ tshark -r 5555-patient-c29.pcap -Y "frame contains \"msg\""
 
 iperf -s -u
 iperf -c 10.10.1.2 -u -b 20m -t 600
+
+sudo tcpdump -i eth1 -l -e -n | ./netbps
