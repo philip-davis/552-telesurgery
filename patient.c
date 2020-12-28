@@ -231,23 +231,35 @@ void *run_video_stream(void *optsv)
 
     printf("waiting for surgeon\n");
     addrlen = sizeof(struct sockaddr_in);
-    recvlen = recvfrom(vs.sock, recvbuf, 4096, 0, &vs.s_addr, &addrlen);
-
-    pthread_barrier_wait(&barrier);
-    gettimeofday(&start_time, NULL);
-    for(i = 0; i < vs.opts->nframes; i++) {
+    do {
+        recvlen = recvfrom(vs.sock, recvbuf, 4096, 0, &vs.s_addr, &addrlen);
+        if(recvlen == 42) {
+            break;
+        }
+        printf("Starting stream\n");
         pthread_barrier_wait(&barrier);
-        send_frame(&vs, i);
+        gettimeofday(&start_time, NULL);
+        for(i = 0; i < vs.opts->nframes; i++) {
+            pthread_barrier_wait(&barrier);
+            send_frame(&vs, i);
+            do {
+                wait_usec = get_wait_usec(&start_time, i);
+                if(wait_usec > 0) {
+                    ts_seq = recvpacket(vs.sock, MSG_ERRQUEUE, &tstamp);
+                    if(ts_seq >= 0) {
+                        ts_results[ts_seq] = tstamp;          
+                    }
+                }   
+            } while(wait_usec > 0);
+        }
+        sleep(2);
         do {
-            wait_usec = get_wait_usec(&start_time, i);
-            if(wait_usec > 0) {
-                ts_seq = recvpacket(vs.sock, MSG_ERRQUEUE, &tstamp);
-                if(ts_seq >= 0) {
-                    ts_results[ts_seq] = tstamp;          
-                }
-            }   
-        } while(wait_usec > 0);
-    }
+            ts_seq = recvpacket(vs.sock, MSG_ERRQUEUE, &tstamp);
+            if(ts_seq >= 0) {
+                ts_results[ts_seq] = tstamp;
+            }
+        } while(ts_seq >= 0);
+    } while(0);
     //send_frame_header(&vs, vs.opts->nframes, 0); 
     send_payload_dgram(&vs, 0xFFFF, 0, 0);
 
