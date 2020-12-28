@@ -4,7 +4,7 @@ sudo apt-get update
 sudo apt install git
 rm -rf /root/552-telesurgery-*
 git clone  https://github.com/philip-davis/552-telesurgery.git /root/552-telesurgery
-git --git-dir /root/552-telesurgery checkout postdev
+git -C /root/552-telesurgery checkout postdev
 
 # Retrieve the server-generated RSA private key.
 geni-get key > $HOME/.ssh/id_rsa
